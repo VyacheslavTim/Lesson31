@@ -7,8 +7,10 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
+from rest_framework.viewsets import ModelViewSet
 
 from ads.models import Category, Job
+from ads.serializers import JobSerializer, JobDetailSerializer, JobListSerializer
 from users.models import User
 
 PAGE_NUMBER = 4
@@ -102,31 +104,63 @@ class JobDetailView(DetailView):
                              })
 
 
-class JobListView(ListView):
-    model = Job
-    queryset = Job.objects.order_by("-price").select_related("author")
+class JobViewSet(ModelViewSet):
+    default_serializer = JobSerializer
+    queryset = Job.objects.order_by("-price")
+    serializers = {
+                   "retrieve": JobDetailSerializer,
+                   "list": JobListSerializer
+                   }
 
-    def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
+    def get_serializer_class(self):
+        return self.serializers.get(self.action, self.default_serializer)
 
-        paginator = Paginator(self.object_list, PAGE_NUMBER)
-        page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
+    def list(self, request, *args, **kwargs):
+        categories = request.GET.getlist("cat")
+        if categories:
+            self.queryset = self.queryset.filter(category_id__in=categories)
+        text = request.GET.get("text")
+        if text:
+            self.queryset = self.queryset.filter(name__icontains=text)
+        location = request.GET.get("location")
+        if location:
+            self.queryset = self.queryset.filter(author__location__name__icontains=location)
 
-        return JsonResponse(
-            {"total": page_obj.paginator.count,
-             "num_pages": page_obj.paginator.num_pages,
-             "items": [{"id": job.id,
-                        "name": job.name,
-                        "author_id": job.author_id,
-                        "author": job.author.first_name,
-                        "price": job.price,
-                        "description": job.description,
-                        "is_published": job.is_published,
-                        "category_id": job.category_id,
-                        "image": job.image.url if job.image else None} for job in page_obj]}
-        )
+        price_from = request.GET.get("price_from")
+        if price_from:
+            self.queryset = self.queryset.filter(price__gte=price_from)
 
+        price_to = request.GET.get("price_to")
+        if price_to:
+            self.queryset = self.queryset.filter(price__lte=price_to)
+
+        return super().list(request, *args, **kwargs)
+
+# class JobListView(ListView):
+#     model = Job
+#     queryset = Job.objects.order_by("-price").select_related("author")
+#
+#     def get(self, request, *args, **kwargs):
+#         super().get(request, *args, **kwargs)
+#
+#         paginator = Paginator(self.object_list, PAGE_NUMBER)
+#         page_number = request.GET.get("page")
+#         page_obj = paginator.get_page(page_number)
+#
+#         return JsonResponse(
+#             {"total": page_obj.paginator.count,
+#              "num_pages": page_obj.paginator.num_pages,
+#              "items": [{"id": job.id,
+#                         "name": job.name,
+#                         "author_id": job.author_id,
+#                         "author": job.author.first_name,
+#                         "price": job.price,
+#                         "description": job.description,
+#                         "is_published": job.is_published,
+#                         "category_id": job.category_id,
+#                         "image": job.image.url if job.image else None} for job in page_obj]}
+#         )
+#
 
 @method_decorator(csrf_exempt, name='dispatch')
 class JobCreateView(CreateView):
