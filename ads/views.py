@@ -1,16 +1,19 @@
 import json
 
-from django.core.paginator import Paginator
+# from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views import View
+# from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.viewsets import ModelViewSet
 
-from ads.models import Category, Job
-from ads.serializers import JobSerializer, JobDetailSerializer, JobListSerializer
+from ads.models import Category, Job, Selection
+from ads.permissions import IsOwner, IsStaff
+from ads.serializers import JobSerializer, JobDetailSerializer, JobListSerializer, SelectionSerializer, \
+    SelectionCreateSerializer
 from users.models import User
 
 PAGE_NUMBER = 4
@@ -111,6 +114,16 @@ class JobViewSet(ModelViewSet):
                    "retrieve": JobDetailSerializer,
                    "list": JobListSerializer
                    }
+
+    default_permission = [AllowAny]
+    permissions = {"retrieve": [IsAuthenticated],
+                   "update": [IsAuthenticated, IsOwner | IsStaff],
+                   "partial_update": [IsAuthenticated, IsOwner | IsStaff],
+                   "destroy": [IsAuthenticated, IsOwner | IsStaff]
+                   }
+
+    def get_permissions(self):
+        return [permission() for permission in self.permissions.get(self.action, self.default_permission)]
 
     def get_serializer_class(self):
         return self.serializers.get(self.action, self.default_serializer)
@@ -300,3 +313,24 @@ class JobImageUpload(UpdateView):
 #         return JsonResponse({"id": new_cat.pk,
 #                              "name": new_cat.name
 #                              })
+class SelectionViewSet(ModelViewSet):
+    serializer_class = SelectionSerializer
+    queryset = Selection.objects.all()
+
+    default_permission = [AllowAny]
+    permissions = {"create": [IsAuthenticated],
+                   "update": [IsAuthenticated, IsOwner],
+                   "partial_update": [IsAuthenticated, IsOwner],
+                   "destroy": [IsAuthenticated, IsOwner]
+                   }
+
+    default_serializer = SelectionSerializer
+    serializers = {
+        "create": SelectionCreateSerializer,
+    }
+
+    def get_permissions(self):
+        return [permission() for permission in self.permissions.get(self.action, self.default_permission)]
+
+    def get_serializer_class(self):
+        return self.serializers.get(self.action, self.default_serializer)

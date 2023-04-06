@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'ads',
     'users',
 ]
@@ -129,7 +130,10 @@ MEDIA_URL = "my_media/"
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ]
 }
 
 STATIC_URL = 'static/'
@@ -138,3 +142,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+TOTAL_ON_PAGE = 10
+AUTH_USER_MODEL = "users.User"

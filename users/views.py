@@ -1,9 +1,11 @@
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, DestroyAPIView, ListAPIView, UpdateAPIView
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from users.models import User, Location
-from users.serializers import UserSerializer, UserListSerializer, UserDetailSerializer, LocationSerializer
+from users.serializers import UserSerializer, UserListSerializer, UserDetailSerializer, LocationSerializer, \
+    UserCreateSerializer
 
 
 class UserPagination(PageNumberPagination):
@@ -11,13 +13,14 @@ class UserPagination(PageNumberPagination):
 
 
 class UserCreateView(CreateAPIView):
-    serializer_class = UserSerializer
+    serializer_class = UserCreateSerializer
     queryset = User.objects.all()
 
 
 class UserDetailView(RetrieveAPIView):
     serializer_class = UserDetailSerializer
     queryset = User.objects.all()
+    permission_classes = [IsAuthenticated]
 
 
 class UserDeleteView(DestroyAPIView):
