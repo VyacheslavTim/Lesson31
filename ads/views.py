@@ -13,7 +13,7 @@ from rest_framework.viewsets import ModelViewSet
 from ads.models import Category, Job, Selection
 from ads.permissions import IsOwner, IsStaff
 from ads.serializers import JobSerializer, JobDetailSerializer, JobListSerializer, SelectionSerializer, \
-    SelectionCreateSerializer
+    SelectionCreateSerializer, CategorySerializer
 from users.models import User
 
 PAGE_NUMBER = 4
@@ -26,70 +26,9 @@ def root(request):
     return JsonResponse({"status": "ok"})
 
 
-class CategoryDetailView(DetailView):
-    model = Category
-
-    def get(self, request, *args, **kwargs):
-        category = self.get_object()
-        return JsonResponse({"id": category.pk, "name": category.name})
-
-
-class CategoryListView(ListView):
-    model = Category
-    queryset = Category.objects.order_by("name").all()
-
-    def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
-        return JsonResponse([{"id": cat.id, "name": cat.name} for cat in self.object_list], safe=False)
-
-
-@method_decorator(csrf_exempt, name='dispatch')
-class CategoryCreateView(CreateView):
-    model = Category
-    fields = "__all__"
-
-    def post(self, request, **kwargs):
-        ad_data = json.loads(request.body)
-        new_cat = Category.objects.create(**ad_data)
-        return JsonResponse({"id": new_cat.pk,
-                             "name": new_cat.name
-                             })
-
-
-@method_decorator(csrf_exempt, name='dispatch')
-class CategoryUpdateView(UpdateView):
-    model = Category
-    fields = "__all__"
-
-    def patch(self, request, *args, **kwargs):
-        super().post(request, *args, **kwargs)
-        ad_data = json.loads(request.body)
-        self.object.name = ad_data["name"]
-        self.object.save()
-        return JsonResponse({"id": self.object.pk,
-                             "name": self.object.name
-                             })
-
-    def put(self, request, *args, **kwargs):
-        super().post(request, *args, **kwargs)
-        ad_data = json.loads(request.body)
-        self.object.name = ad_data["name"]
-        self.object.save()
-        return JsonResponse({"id": self.object.id,
-                             "name": self.object.name
-                             })
-
-
-@method_decorator(csrf_exempt, name='dispatch')
-class CategoryDeleteView(DeleteView):
-    model = Category
-    success_url = "/"
-
-    def delete(self, request, *args, **kwargs):
-        cat = self.get_object()
-        cat_id = cat.id
-        super().delete(request, *args, **kwargs)
-        return JsonResponse({"id": cat_id}, safe=False)
+class CatViewSet(ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
 
 class JobDetailView(DetailView):

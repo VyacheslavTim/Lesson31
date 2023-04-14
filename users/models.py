@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from users.validators import check_email, check_birth_date
+
 
 class Location(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -26,3 +28,5 @@ class User(AbstractUser):
     role = models.CharField(choices=Roles.choices, max_length=9, default=Roles.MEMBER)
     age = models.PositiveIntegerField(null=True)
     location = models.ManyToManyField(Location, blank=True)
+    birth_date = models.DateField(validators=[check_birth_date], null=True, blank=True)
+    email = models.EmailField(unique=True, null=True, validators=[check_email])

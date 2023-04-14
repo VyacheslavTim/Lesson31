@@ -1,12 +1,15 @@
-from rest_framework.fields import SerializerMethodField
+from rest_framework.fields import SerializerMethodField, BooleanField
 from rest_framework.relations import SlugRelatedField
 from rest_framework.serializers import ModelSerializer
 
 from ads.models import Job, Category, Selection
+from ads.validators import not_true
 from users.models import User
 
 
 class JobSerializer(ModelSerializer):
+    is_published = BooleanField(validators=[not_true], required=False)
+
     class Meta:
         model = Job
         fields = "__all__"
@@ -50,4 +53,10 @@ class SelectionCreateSerializer(ModelSerializer):
 
     class Meta:
         model = Selection
+        fields = "__all__"
+
+
+class CategorySerializer(ModelSerializer):
+    class Meta:
+        model = Category
         fields = "__all__"

@@ -1,3 +1,4 @@
+from django.core.validators import MinLengthValidator
 from django.db import models
 
 
@@ -6,6 +7,7 @@ from django.db import models
 
 class Category(models.Model):
     name = models.CharField(max_length=150, unique=True)
+    slug = models.SlugField(max_length=10, validators=[MinLengthValidator(5)], unique=True)
 
     class Meta:
         verbose_name = "Категория"
@@ -16,11 +18,11 @@ class Category(models.Model):
 
 
 class Job(models.Model):
-    name = models.CharField(max_length=150)
+    name = models.CharField(max_length=150, validators=[MinLengthValidator(10)])
     author = models.ForeignKey("users.User", on_delete=models.CASCADE)
     price = models.PositiveIntegerField()
-    description = models.TextField()
-    is_published = models.BooleanField()
+    description = models.TextField(null=True, blank=True)
+    is_published = models.BooleanField(default=False)
     category = models.ForeignKey("Category", on_delete=models.CASCADE)
     image = models.ImageField(upload_to="ad_picture", null=True, blank=True)
 
